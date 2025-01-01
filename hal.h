@@ -46,44 +46,60 @@ void hal_init()
 
 void hal_loop()
 {
-    unsigned long currentTime = millis();
+    dht_read();
+    ds18b20_read();
+}
 
+
+//+++++++++++++++++++ DHT22 +++++++++++++++++++++++++++++++
+void dht_read()
+{
+    unsigned long currentTime = millis();
     static unsigned long lastDHTReadTime = 0;
     if (currentTime - lastDHTReadTime >= DHT_READ_INTERVAL)
     {
-        dht_read();
-        lastDHTReadTime = currentTime;
-    }
+        float h = dht.readHumidity();
+        float t = dht.readTemperature();
 
+        if (isnan(h) || isnan(t))
+        {
+            ambientHumidity = 100.0;  //error - max value
+            ambientTemperature = 125.0;  //error - max value
+        }
+        else
+        {
+            ambientTemperature = t;
+            ambientHumidity = h;
+        }
+    }
+}
+
+float getAmbientTemperature()
+{
+    return ambientTemperature;
+}
+
+float getAmbientHumidity()
+{
+    return ambientHumidity;
+}
+
+
+//+++++++++++++++++++ DS18B20 +++++++++++++++++++++++++++++++
+void ds18b20_read()
+{
+    unsigned long currentTime = millis();
     static unsigned long lastDS18B20ReadTime = 0;
     if (currentTime - lastDS18B20ReadTime >= DS18B20_READ_INTERVAL)
     {
-        ds18b20_read();
-        lastDS18B20ReadTime = currentTime;
+        ds18b20.requestTemperatures(); // Send the command to get temperatures
+        radiatorTemperature = ds18b20.getTempCByIndex(0);
     }
 }
 
-void dht_read()
+float getRadiatorTemperature()
 {
-    float h = dht.readHumidity();
-    float t = dht.readTemperature();
-
-    if (isnan(h) || isnan(t))
-    {
-        ambientHumidity = 100.0;  //error - max value
-        ambientTemperature = 125.0;  //error - max value
-    }
-    else
-    {
-        ambientTemperature = t;
-        ambientHumidity = h;
-    }
-}
-
-void ds18b20_read()
-{
-    ds18b20.requestTemperatures(); // Send the command to get temperatures
-    radiatorTemperature = ds18b20.getTempCByIndex(0);
+    return radiatorTemperature;
 }
 
 #endif // HAL_H
