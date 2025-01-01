@@ -168,7 +168,15 @@ void ds18b20_read()
     if (currentTime - lastDS18B20ReadTime >= DS18B20_READ_INTERVAL)
     {
         ds18b20.requestTemperatures(); // Send the command to get temperatures
-        radiatorTemperature = ds18b20.getTempCByIndex(0);
+        float temp = ds18b20.getTempCByIndex(0);
+        if (temp == DEVICE_DISCONNECTED_C)
+        {
+            radiatorTemperature = 125.0; // error - max value
+        }
+        else
+        {
+            radiatorTemperature = temp;
+        }
     }
 }
 
